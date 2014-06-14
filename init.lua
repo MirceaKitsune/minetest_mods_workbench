@@ -86,7 +86,7 @@ end)
 -- Item definitions:
 --
 
-minetest.register_node("workbench:workbench", {
+minetest.register_node("workbench:3x3", {
 	description = "WorkBench",
 	tiles = {"workbench_top.png", "workbench_bottom.png", "workbench_side.png",
 		"workbench_side.png", "workbench_side.png", "workbench_front.png"},
@@ -105,7 +105,7 @@ minetest.register_node("workbench:workbench", {
 })
 
 minetest.register_craft({
-	output = 'workbench:workbench',
+	output = 'workbench:3x3',
 	recipe = {
 		{'group:wood', 'group:wood', ''},
 		{'group:wood', 'group:wood', ''},
