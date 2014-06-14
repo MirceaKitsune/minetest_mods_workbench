@@ -25,11 +25,16 @@ local function set_craft_size(player, size)
 end
 
 local function set_craft_formspec(player, size)
-	local formspec =
-	"size[8,"..(size+4.5).."]"
-	.."list[current_player;main;0,"..(size+0.5)..";8,4;]"
-	.."list[current_player;craft;"..(6-size)..",0;"..size..","..size..";]"
-	.."list[current_player;craftpreview;7,"..(size/2-0.5)..";1,1;]"
+	local inv = player:get_inventory()
+	local msize_x = math.min(inv:get_size("main"), 8)
+	local msize_y = math.min(math.ceil(inv:get_size("main") / 8), 4)
+	local fsize_x = math.max(msize_x, size + 2)
+	local fsize_y = msize_y + size + 1
+
+	local formspec = "size["..fsize_x..","..fsize_y.."]"
+	.."list[current_player;main;"..(fsize_x-msize_x)..","..(fsize_y-msize_y)..";"..msize_x..","..msize_y..";]"
+	.."list[current_player;craft;"..(fsize_x-size-2)..",0;"..size..","..size..";]"
+	.."list[current_player;craftpreview;"..(fsize_x-1)..","..(size/2-0.5)..";1,1;]"
 	player:set_inventory_formspec(formspec)
 end
 
