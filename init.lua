@@ -1,5 +1,8 @@
 -- Workbench mod by MirceaKitsune
 
+-- Inventory crafting grid size. Use nil to leave the default formspec untouched, recommended if other mods change the inventory window.
+local INVENTORY_CRAFT = 2
+
 --
 -- Internal workbench functions:
 --
@@ -15,7 +18,10 @@ local function move_items(s_inv, s_listname, d_inv, d_listname)
 	s_inv:set_list(s_listname, {})
 end
 
-local function set_craft_size(player, size)
+local inventory_persistence = {}
+
+local function inventory_set_size(player, size)
+	size = math.min(6, math.max(1, size))
 	local inv = player:get_inventory()
 	if inv:get_size("craft") ~= size*size then
 		move_items(inv, "craft", inv, "main")
@@ -24,7 +30,8 @@ local function set_craft_size(player, size)
 	end
 end
 
-local function set_craft_formspec(player, size)
+local function inventory_set_formspec(player, size)
+	size = math.min(6, math.max(1, size))
 	local inv = player:get_inventory()
 	local msize_x = math.min(inv:get_size("main"), 8)
 	local msize_y = math.min(math.ceil(inv:get_size("main") / 8), 4)
@@ -38,33 +45,40 @@ local function set_craft_formspec(player, size)
 	player:set_inventory_formspec(formspec)
 end
 
-local function set_craft(player, size)
-	-- When size is nil, we want to set the default inventory craft
+local function inventory_set(player, size)
+	local name = player:get_player_name()
+	local inv = player:get_inventory()
+
+	-- When size is a number, we want to presist inventory settings and activate the workbench settings
+	-- When size is nil, we want to re-activate the persisted inventory settings
 	if not size then
-		if minetest.setting_getbool("creative_mode") then
-			set_craft_size(player, 3)
-			creative_inventory.set_creative_formspec(player, 1, 1)
-		elseif minetest.setting_getbool("inventory_crafting_full") then
-			set_craft_size(player, 3)
-			set_craft_formspec(player, 3)
-		else
-			set_craft_size(player, 2)
-			set_craft_formspec(player, 2)
-		end
+		inv:set_size("craft", inventory_persistence[name].craft_size)
+		inv:set_width("craft", inventory_persistence[name].craft_width)
+		player:set_inventory_formspec(inventory_persistence[name].formspec)
+		inventory_persistence[name] = nil
 	else
-		size = math.min(6, math.max(1, size))
-		set_craft_size(player, size)
-		set_craft_formspec(player, size)
+		inventory_persistence[name] = {}
+		inventory_persistence[name].craft_size = inv:get_size("craft")
+		inventory_persistence[name].craft_width = inv:get_width("craft")
+		inventory_persistence[name].formspec = player:get_inventory_formspec()
+
+		inventory_set_size(player, size)
+		inventory_set_formspec(player, size)
 	end
 end
 
 minetest.register_on_joinplayer(function(player)
-	set_craft(player, _)
+	if minetest.setting_getbool("creative_mode") then
+		inventory_set_size(player, 3)
+	elseif INVENTORY_CRAFT then
+		inventory_set_size(player, INVENTORY_CRAFT)
+		inventory_set_formspec(player, INVENTORY_CRAFT)
+	end
 end)
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname == "workbench:workbench" and fields.quit then
-		set_craft(player, _)
+		inventory_set(player, _)
 	end
 end)
 
@@ -85,7 +99,7 @@ minetest.register_node("workbench:workbench", {
 		meta:set_string("infotext", "Workbench")
 	end,
 	on_rightclick = function(pos, node, clicker)
-		set_craft(clicker, 3)
+		inventory_set(clicker, 3)
 		minetest.show_formspec(clicker:get_player_name(), "workbench:workbench", clicker:get_inventory_formspec())
 	end,
 })
