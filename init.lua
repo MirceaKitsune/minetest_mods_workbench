@@ -1,6 +1,9 @@
 -- Workbench mod by MirceaKitsune
 
--- Moves items from one inventory to another
+--
+-- Internal workbench functions:
+--
+
 local function move_items(s_inv, s_listname, d_inv, d_listname)
 	local s_size = s_inv:get_size(s_listname)
 	for i = 1, s_size do
@@ -12,54 +15,57 @@ local function move_items(s_inv, s_listname, d_inv, d_listname)
 	s_inv:set_list(s_listname, {})
 end
 
--- Resizes the player's craft area
-local function craft_resize(player, size)
-	if not size then
-		-- Default size: 3 in creative, 2 otherwise
-		if minetest.setting_getbool("creative_mode") or
-		minetest.setting_getbool("inventory_crafting_full") then
-			size = 3
-		else
-			size = 2
-		end
-	end
-
+local function set_craft_size(player, size)
 	local inv = player:get_inventory()
-	if inv:get_width("craft") ~= size then
+	if inv:get_size("craft") ~= size*size then
 		move_items(inv, "craft", inv, "main")
-		inv:set_width("craft", size)
 		inv:set_size("craft", size*size)
-		return size
+		inv:set_width("craft", size)
 	end
 end
 
-local function get_formspec(size)
-	size = math.min(6, math.max(1, size))
+local function set_craft_formspec(player, size)
 	local formspec =
-		"size[8,"..(size+4.5).."]"
-		.."list[current_player;main;0,"..(size+0.5)..";8,4;]"
-		.."list[current_player;craft;0,0;"..size..","..size..";]"
-		.."list[current_player;craftpreview;6,"..(size/2-0.5)..";1,1;]"
-	return formspec
+	"size[8,"..(size+4.5).."]"
+	.."list[current_player;main;0,"..(size+0.5)..";8,4;]"
+	.."list[current_player;craft;"..(6-size)..",0;"..size..","..size..";]"
+	.."list[current_player;craftpreview;7,"..(size/2-0.5)..";1,1;]"
+	player:set_inventory_formspec(formspec)
 end
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
-	if formname == "workbench:workbench" then
-		if fields.quit then
-			craft_resize(player, _)
+local function set_craft(player, size)
+	-- When size is nil, we want to set the default inventory craft
+	if not size then
+		if minetest.setting_getbool("creative_mode") then
+			set_craft_size(player, 3)
+			creative_inventory.set_creative_formspec(player, 1, 1)
+		elseif minetest.setting_getbool("inventory_crafting_full") then
+			set_craft_size(player, 3)
+			set_craft_formspec(player, 3)
+		else
+			set_craft_size(player, 2)
+			set_craft_formspec(player, 2)
 		end
+	else
+		size = math.min(6, math.max(1, size))
+		set_craft_size(player, size)
+		set_craft_formspec(player, size)
 	end
-end)
+end
 
 minetest.register_on_joinplayer(function(player)
-	local size = craft_resize(player, _)
-	if size and size ~= 3 then
-		player:set_inventory_formspec("size[8,7.5]"
-			.."list[current_player;main;0,3.5;8,4;]"
-			.."list[current_player;craft;3,0.5;2,2;]"
-			.."list[current_player;craftpreview;6,1;1,1;]")
+	set_craft(player, _)
+end)
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if formname == "workbench:workbench" and fields.quit then
+		set_craft(player, _)
 	end
 end)
+
+--
+-- Item definitions:
+--
 
 minetest.register_node("workbench:workbench", {
 	description = "WorkBench",
@@ -74,8 +80,8 @@ minetest.register_node("workbench:workbench", {
 		meta:set_string("infotext", "Workbench")
 	end,
 	on_rightclick = function(pos, node, clicker)
-		craft_resize(clicker, 3)
-		minetest.show_formspec(clicker:get_player_name(), "default:workbench", get_formspec(3))
+		set_craft(clicker, 3)
+		minetest.show_formspec(clicker:get_player_name(), "workbench:workbench", clicker:get_inventory_formspec())
 	end,
 })
 
