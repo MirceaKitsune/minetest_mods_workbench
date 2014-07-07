@@ -36,12 +36,19 @@ local function inventory_set_formspec(player, size)
 	local msize_x = math.min(inv:get_size("main"), 8)
 	local msize_y = math.min(math.ceil(inv:get_size("main") / 8), 4)
 	local fsize_x = math.max(msize_x, size + 2)
-	local fsize_y = msize_y + size + 1
+	local fsize_y = msize_y + size + 1.25
 
 	local formspec = "size["..fsize_x..","..fsize_y.."]"
-	.."list[current_player;main;"..(fsize_x-msize_x)..","..(fsize_y-msize_y)..";"..msize_x..","..msize_y..";]"
+	..default.gui_bg
+	..default.gui_bg_img
+	..default.gui_slots
+	.."list[current_player;main;"..(fsize_x-msize_x)..","..(fsize_y-msize_y)..";"..msize_x..",1;]"
+	.."list[current_player;main;"..(fsize_x-msize_x)..","..(fsize_y-msize_y+1.25)..";"..msize_x..","..(msize_y - 1)..";"..msize_x.."]"
 	.."list[current_player;craft;"..(fsize_x-size-2)..",0;"..size..","..size..";]"
 	.."list[current_player;craftpreview;"..(fsize_x-1)..","..(size/2-0.5)..";1,1;]"
+	for i = 0, msize_x, 1 do
+		formspec = formspec.."image["..(fsize_x-msize_x + i)..","..(fsize_y-msize_y)..";1,1;gui_hb_bg.png]"
+	end
 	player:set_inventory_formspec(formspec)
 end
 
@@ -71,8 +78,10 @@ minetest.register_on_joinplayer(function(player)
 	if minetest.setting_getbool("creative_mode") then
 		inventory_set_size(player, 3)
 	elseif INVENTORY_CRAFT then
-		inventory_set_size(player, INVENTORY_CRAFT)
-		inventory_set_formspec(player, INVENTORY_CRAFT)
+		minetest.after(0, function()
+			inventory_set_size(player, INVENTORY_CRAFT)
+			inventory_set_formspec(player, INVENTORY_CRAFT)
+		end)
 	end
 end)
 
