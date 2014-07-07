@@ -46,7 +46,7 @@ local function inventory_set_formspec(player, size)
 	.."list[current_player;main;"..(fsize_x-msize_x)..","..(fsize_y-msize_y+1.25)..";"..msize_x..","..(msize_y - 1)..";"..msize_x.."]"
 	.."list[current_player;craft;"..(fsize_x-size-2)..",0;"..size..","..size..";]"
 	.."list[current_player;craftpreview;"..(fsize_x-1)..","..(size/2-0.5)..";1,1;]"
-	for i = 0, msize_x, 1 do
+	for i = 0, msize_x - 1, 1 do
 		formspec = formspec.."image["..(fsize_x-msize_x + i)..","..(fsize_y-msize_y)..";1,1;gui_hb_bg.png]"
 	end
 	player:set_inventory_formspec(formspec)
@@ -97,8 +97,8 @@ end)
 
 minetest.register_node("workbench:3x3", {
 	description = "WorkBench",
-	tiles = {"workbench_top.png", "workbench_bottom.png", "workbench_side.png",
-		"workbench_side.png", "workbench_side.png", "workbench_front.png"},
+	tiles = {"workbench_3x3_top.png", "workbench_3x3_bottom.png", "workbench_3x3_side.png",
+		"workbench_3x3_side.png", "workbench_3x3_side.png", "workbench_3x3_front.png"},
 	paramtype2 = "facedir",
 	groups = {choppy=2,oddly_breakable_by_hand=2},
 	legacy_facedir_simple = true,
